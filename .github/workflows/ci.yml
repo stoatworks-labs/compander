@@ -1,14 +1,12 @@
 name: ci
 
-# Until this existed the repo had no workflow with a `pull_request` trigger at
-# all — only a tag-driven release — so Dependabot bumps arrived with no status
-# check to gate a merge on and simply accumulated.
+# A workflow with a `pull_request` trigger, so Dependabot bumps arrive with a
+# status check to gate a merge on rather than simply accumulating.
 #
-# macOS only, and deliberately. The CMakeLists branches on APPLE and WIN32 and
-# has no Linux path at all, so ubuntu is not an option; Windows needs GLEW from
-# vcpkg, which is a slow, fragile thing to put in front of every pull request
-# for a compile break that would almost certainly show up on macOS too. The
-# release workflow still builds both.
+# macOS only, and deliberately. The CMakeLists branches on APPLE and WIN32;
+# Windows needs GLEW from vcpkg, which is a slow, fragile thing to put in front
+# of every pull request for a compile break that would almost certainly show up
+# on macOS too. The release workflow still builds every platform.
 on:
   push:
     branches: [main]
@@ -31,28 +29,78 @@ jobs:
         # break is not architecture-specific. Passed as a single value with no
         # semicolon, which the shell would split.
         #
-        # ABOMERRATION_BUILD_TOOLS is ON here where the release build turns it OFF:
-        # abomtest is a large slice of the C++ and carries the only mirror of
-        # the plugin's maths, so compiling it is most of the value.
+        # COMPANDER_BUILD_TOOLS is ON here where the release build turns it OFF:
+        # cmtest is where the model is actually checked, so compiling it is most
+        # of the value even before anything runs.
         run: >
           cmake -B build
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_OSX_ARCHITECTURES=arm64
-          -DABOMERRATION_BUILD_TOOLS=ON
+          -DCOMPANDER_BUILD_TOOLS=ON
 
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      # The one set of checks that needs no GL context, so it is the one set a CI
-      # runner can be trusted with: the bar recovery, the depth carve-out and the
-      # band split are pure arithmetic. abomtest skips context creation entirely
-      # when --drive is the only mode asked for.
+      # The checks that need no GL context, which are the ones a hosted runner
+      # can be trusted with. All four are pure arithmetic and `cmtest` creates
+      # no context unless a rendering mode asks for one.
       #
-      # Everything else in tools/verify.sh renders, and a software GL stack on a
-      # hosted runner is not the thing to hang a merge gate on -- those run
-      # locally before a tag.
-      - name: The reaction arithmetic
-        run: ./build/abomtest --drive
+      # These are also the four that caught every modelling error this plugin
+      # has had, so they are the right things to gate a merge on.
+      - name: The round trip cancels
+        run: ./build/cmtest --roundtrip
+
+      - name: Tilt and Emphasis are inert on a flat field
+        run: ./build/cmtest --flat
+
+      - name: The doubling passes match the serial detector
+        run: ./build/cmtest --detector
+
+      - name: Every preset survives every host
+        run: ./build/cmtest --presets
+
+      # Resolume truncates parameter names to 16 characters and the SDK hides it
+      # completely, so this is the only place a too-long name is ever reported.
+      - name: Parameter names fit in 16 characters
+        run: |
+          if ./build/cmtest --list | grep -q WARNING; then
+            ./build/cmtest --list | grep -B1 WARNING
+            exit 1
+          fi
+
+      # Every shader through a real GLSL compiler. A shader that will not build
+      # presents to an operator as "the effect does nothing", with the message
+      # only in the plugin's log — so it is worth catching here, where nobody
+      # has to be running Resolume to find out.
+      #
+      # --target-env=opengl4.5 with -fauto-map-locations: glslc targets SPIR-V,
+      # which demands an explicit layout(location) on every uniform and varying.
+      # Those are Vulkan rules, not GLSL ones, and without the flag every shader
+      # "fails" for reasons that have nothing to do with the code.
+      - name: Shaders compile
+        run: |
+          brew install shaderc
+          scratch="$(mktemp -d)"
+          python3 - "$scratch" <<'PY'
+          import re, sys, pathlib
+          out = pathlib.Path(sys.argv[1])
+          src = {}
+          for f in ["source/shaders/Vertex.cpp", "source/shaders/Common.cpp", "source/shaders/Passes.cpp"]:
+              text = pathlib.Path(f).read_text()
+              for m in re.finditer(r'const char\* const (\w+)\s*=\s*R"\((.*?)\)";', text, re.S):
+                  src[m.group(1)] = m.group(2)
+          common = src.pop("kCommon")
+          for name, body in src.items():
+              body = body.replace("@COMMON@", common)
+              (out / (name + (".vert" if name == "kVertex" else ".frag"))).write_text(body)
+          PY
+          fail=0
+          for shader in "$scratch"/*.vert "$scratch"/*.frag; do
+            if ! glslc --target-env=opengl4.5 -fauto-map-locations "$shader" -o /dev/null; then
+              echo "FAILED: $(basename "$shader")"; fail=1
+            fi
+          done
+          exit $fail
 
       # Uploading is not only for the artefact. This repo has no package
       # manifest, so github-actions is its only Dependabot ecosystem — and a
@@ -61,6 +109,6 @@ jobs:
       # actually exercises the action being bumped.
       - uses: actions/upload-artifact@v7
         with:
-          name: abomerration-macos-arm64
+          name: compander-macos-arm64
           path: build/*.bundle
           if-no-files-found: error
