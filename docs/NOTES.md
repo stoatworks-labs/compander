@@ -359,10 +359,27 @@ correctly only when the host happened to ask for a whole frame.
   `Audio Band` and `Audio Tilt` remain unexercised end to end, in Arena and in
   the harness alike.
 
-  The volume was left alone deliberately rather than turned up. To close this:
-  unmute the composition, put an AV clip on a layer, set Sidechain to Audio, and
-  check the log for `audio input active: 64 bins, envelope …` — a line that
-  exists precisely so this question has a one-line answer.
+  **Tried, twice, and it could not be closed on this machine.** With the plugin
+  on a layer, an AV clip connected, Sidechain on *Picture × Audio* and Audio
+  Amount at 1, the composition master was raised to 0.35 and then the layer's
+  own audio to 0.6 as well. No `audio input active` line appeared either time,
+  and both volumes were put back to 0.0.
+
+  The cause is in Arena's own audio configuration, not in the plugin.
+  `~/Documents/Resolume Arena/Preferences/config.xml` has:
+
+      audioOutputDeviceName="NDI Audio"  audioInputDeviceName=""  audioDeviceInChans="0"
+
+  — output routed to a virtual NDI sink and no audio input device at all, which
+  is also why the composition was muted to begin with. There is no live audio
+  bus on this machine for Resolume to analyse, so nothing was ever going to be
+  delivered to an `FF_USAGE_FFT` buffer.
+
+  ⚠️ **That is a machine finding, not a plugin finding, and it does not clear
+  the plugin.** The FFT path remains unexercised end to end. To close it, on a
+  machine with a real audio device: put an AV clip on a layer, set Sidechain to
+  Audio, and check the log for `audio input active: 64 bins, envelope …` — a
+  line that exists precisely so this question has a one-line answer.
 - **Whether Arena's UI sliders visually follow a preset is not established.** The
   REST readback matches the preset exactly, but REST reads `GetFloatParameter`,
   which reflects the plugin's own state rather than what the inspector draws. The

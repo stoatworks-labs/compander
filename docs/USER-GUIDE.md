@@ -238,8 +238,11 @@ one line:
 audio input active: 64 bins, envelope 0.31, balance -0.12
 ```
 
-If that line never appears, no spectrum is arriving and the problem is upstream of the plugin: check
-Resolume's own audio input, and that the composition is not muted.
+If that line never appears, no spectrum is arriving and the problem is upstream of the plugin.
+Check, in this order: that the composition and the layer are not muted (they are separate
+volumes, and both must be up), and that **Resolume has a real audio device**. An install whose
+output is routed to a virtual sink with no input device configured has no live audio bus to
+analyse, and nothing will ever reach an audio-reactive parameter — this plugin's or anyone else's.
 
     macOS    ~/Library/Logs/compander/compander.YYYY-MM-DD.log
     Windows  %USERPROFILE%\compander\logs\
