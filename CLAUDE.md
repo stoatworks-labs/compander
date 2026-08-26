@@ -30,6 +30,8 @@ Read `AGENTS.md` before changing the chain, the detector or the control mapping.
 - The test scene: `./build/cmtest --scene /tmp/scene.png`
 - Every preset on one page: `./build/cmtest --sheet /tmp/presets.png --width 420 --height 236`
 - Set a control: `--set "Compress=0.6" --set "Time Constant=0.8"` (repeatable, by display name)
+- Put real footage through the real shaders (for the project video):
+  `ffmpeg … -f rawvideo -pix_fmt rgba - | ./build/cmtest --pipe --size WxH [--script cues.txt] | ffmpeg …`
 
 ## Notes
 - **The scan is the time axis.** A compander's time constant converts to a
@@ -47,6 +49,10 @@ Read `AGENTS.md` before changing the chain, the detector or the control mapping.
   `params[]` at the TOP of the constructor or every control is declared as zero,
   including Mix. Every offline test still passes. See docs/NOTES.md.
 - **`InitGL` must stay idempotent.** The harness calls it per frame.
+- **`--pipe` drives `SetTime` on a synthetic clock**, and must. This plugin has
+  real temporal state — the frame-global follower decays by the frame's own
+  duration — so without it the pumping would follow how fast the render happens
+  rather than the video's clock.
 - Two detectors, not one. The encoder's sees the picture, the decoder's sees the
   encoded signal, and that difference IS the mistracking. Reusing one deletes the
   effect.

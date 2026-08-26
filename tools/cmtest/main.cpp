@@ -1358,6 +1358,226 @@ int writeSheet( const std::string& path, const Options& options )
 	return ok ? 0 : 1;
 }
 
+//---------------------------------------------------------------------------
+// Parameter automation for --pipe.
+//
+// A plain text file of `frame  Parameter Name  value` lines. Values are held
+// before the first key and after the last, and linearly interpolated between,
+// so the piece is edited by editing the cue sheet rather than by editing code.
+//---------------------------------------------------------------------------
+using Track = std::vector< std::pair< int, float > >;
+
+std::map< std::string, Track > loadScript( const std::string& path, std::string& error )
+{
+	std::map< std::string, Track > tracks;
+	std::ifstream file( path );
+	if( !file )
+	{
+		error = "cannot open " + path;
+		return tracks;
+	}
+
+	std::string line;
+	int         lineNumber = 0;
+	while( std::getline( file, line ) )
+	{
+		++lineNumber;
+		const size_t hash = line.find( '#' );
+		if( hash != std::string::npos )
+			line.erase( hash );
+		std::istringstream in( line );
+
+		int frame = 0;
+		if( !( in >> frame ) )
+			continue;//blank or comment
+
+		// The name is everything up to the last token, because parameters have
+		// spaces in them and the value never does.
+		std::vector< std::string > words;
+		std::string                word;
+		while( in >> word )
+			words.push_back( word );
+		if( words.size() < 2 )
+		{
+			error = path + ":" + std::to_string( lineNumber ) + ": expected `frame Parameter Name value`";
+			return {};
+		}
+
+		const float value = std::strtof( words.back().c_str(), nullptr );
+		words.pop_back();
+		std::string name = words.front();
+		for( size_t i = 1; i < words.size(); ++i )
+			name += " " + words[ i ];
+
+		tracks[ name ].emplace_back( frame, value );
+	}
+
+	for( auto& entry : tracks )
+		std::sort( entry.second.begin(), entry.second.end() );
+	return tracks;
+}
+
+float valueAt( const Track& track, int frame )
+{
+	if( track.empty() )
+		return 0.0f;
+	if( frame <= track.front().first )
+		return track.front().second;
+	if( frame >= track.back().first )
+		return track.back().second;
+
+	for( size_t i = 1; i < track.size(); ++i )
+	{
+		if( frame <= track[ i ].first )
+		{
+			const auto& a    = track[ i - 1 ];
+			const auto& b    = track[ i ];
+			const float span = static_cast< float >( b.first - a.first );
+			const float t    = span > 0.0f ? ( static_cast< float >( frame - a.first ) / span ) : 1.0f;
+			return a.second + ( b.second - a.second ) * t;
+		}
+	}
+	return track.back().second;
+}
+
+bool readExactly( void* into, size_t bytes )
+{
+	unsigned char* p   = static_cast< unsigned char* >( into );
+	size_t         got = 0;
+	while( got < bytes )
+	{
+		const size_t n = fread( p + got, 1, bytes - got, stdin );
+		if( n == 0 )
+			return false;//clean EOF, or a short final frame we cannot use
+		got += n;
+	}
+	return true;
+}
+
+/// Real frames through the real plugin, for the project video.
+///
+/// Reads rawvideo RGBA from stdin and writes it back to stdout, so the whole
+/// thing is an ffmpeg pipeline:
+///
+///     ffmpeg -i in.mp4 -f rawvideo -pix_fmt rgba - \
+///       | cmtest --pipe --size 1920x1080 --script cues.txt \
+///       | ffmpeg -f rawvideo -pix_fmt rgba -s 1920x1080 -r 30 -i - out.mp4
+///
+/// ⚠️ **SetTime is driven here, on a synthetic clock, and it is load-bearing.**
+/// Unlike most of the fleet's plugins this one has real temporal state: the
+/// frame-global envelope follower decays by the frame's own duration. Left to
+/// its own devices the plugin falls back to the wall clock, so the pumping
+/// would follow how fast the render happens rather than the video's clock --
+/// fast on an idle machine, slow on a busy one, and different every time.
+/// `SetClockScaleForTest( 1.0 )` settles the unit question so no detection
+/// runs, and the time handed over is the frame number over the frame rate.
+int runPipe( int width, int height, double fps, const std::string& scriptPath,
+             const Options& options )
+{
+	std::map< std::string, Track > tracks;
+	if( !scriptPath.empty() )
+	{
+		std::string error;
+		tracks = loadScript( scriptPath, error );
+		if( !error.empty() )
+		{
+			std::fprintf( stderr, "cmtest: %s\n", error.c_str() );
+			return 1;
+		}
+	}
+
+	CGLContextObj context = createContext();
+	if( context == nullptr )
+	{
+		std::fprintf( stderr, "cmtest: no GL context\n" );
+		return 1;
+	}
+
+	Target target = makeTarget( width, height );
+
+	Plugin plugin;
+	setNeutral( plugin );
+	applySets( plugin, options );
+	plugin.SetClockScaleForTest( 1.0 );
+
+	// Resolve the cue sheet's names once, against the plugin itself. A cue for a
+	// parameter that does not exist is a silent no-op otherwise, and the first
+	// sign of it is a beat in the finished video where nothing happens.
+	const auto byName = parameterIndex( plugin );
+
+	std::vector< std::pair< unsigned int, const Track* > > bound;
+	for( const auto& entry : tracks )
+	{
+		const auto found = byName.find( entry.first );
+		if( found == byName.end() )
+		{
+			std::fprintf( stderr, "cmtest: no parameter named \"%s\" in the script\n",
+			              entry.first.c_str() );
+			return 1;
+		}
+		bound.emplace_back( found->second, &entry.second );
+	}
+
+	GLuint input = 0;
+	glGenTextures( 1, &input );
+	glBindTexture( GL_TEXTURE_2D, input );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glBindTexture( GL_TEXTURE_2D, 0 );
+
+	const size_t                 frameBytes = static_cast< size_t >( width ) * height * 4;
+	std::vector< unsigned char > incoming( frameBytes );
+
+	int frame = 0;
+	while( readExactly( incoming.data(), frameBytes ) )
+	{
+		for( const auto& track : bound )
+			plugin.SetFloatParameter( track.first, valueAt( *track.second, frame ) );
+
+		plugin.SetTime( static_cast< double >( frame ) / fps );
+
+		// ffmpeg hands over rows top-down and GL wants them bottom-up. Flipping
+		// on the way in and again on the way out keeps every coordinate in this
+		// file meaning what it says everywhere else -- and it matters more here
+		// than in most plugins, because the scan direction IS the effect: get
+		// this wrong and the smear trails upward out of the top of bright
+		// objects instead of to the right of them.
+		const std::vector< unsigned char > flipped = flipRows( incoming, width, height );
+
+		glBindTexture( GL_TEXTURE_2D, input );
+		glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
+		                 flipped.data() );
+		glBindTexture( GL_TEXTURE_2D, 0 );
+
+		if( !render( plugin, target, input, width, height ) )
+		{
+			std::fprintf( stderr, "cmtest: render failed at frame %d\n", frame );
+			return 1;
+		}
+
+		const std::vector< unsigned char > out = flipRows( readBytes( target ), width, height );
+		if( fwrite( out.data(), 1, frameBytes, stdout ) != frameBytes )
+		{
+			std::fprintf( stderr, "cmtest: short write at frame %d\n", frame );
+			return 1;
+		}
+
+		++frame;
+	}
+
+	fflush( stdout );
+	std::fprintf( stderr, "cmtest: %d frames\n", frame );
+
+	glDeleteTextures( 1, &input );
+	releaseTarget( target );
+	CGLSetCurrentContext( nullptr );
+	CGLDestroyContext( context );
+	return 0;
+}
+
 void usage()
 {
 	std::printf(
@@ -1372,6 +1592,10 @@ void usage()
 	    "  --out PATH            render a frame\n"
 	    "  --scene PATH          write the synthetic test scene\n"
 	    "  --sheet PATH          every factory preset on one page\n"
+	    "  --pipe                rawvideo RGBA in, rawvideo RGBA out, for the video\n"
+	    "  --script PATH         a cue sheet of `frame Parameter Name value` lines\n"
+	    "  --size WxH            frame size for --pipe\n"
+	    "  --fps N               frame rate --pipe should tell the plugin about\n"
 	    "  --bench               render cost against the time constant\n"
 	    "  --set \"Name=value\"    set a parameter by its host-facing name\n"
 	    "  --width N --height N  frame size (default 640x360)\n" );
@@ -1381,8 +1605,9 @@ void usage()
 
 int main( int argc, char** argv )
 {
-	Options options;
-	std::string mode, path;
+	Options     options;
+	std::string mode, path, script;
+	double      fps = 30.0;
 
 	for( int i = 1; i < argc; ++i )
 	{
@@ -1401,6 +1626,21 @@ int main( int argc, char** argv )
 			options.width = std::stoi( next() );
 		else if( arg == "--height" )
 			options.height = std::stoi( next() );
+		else if( arg == "--script" )
+			script = next();
+		else if( arg == "--fps" )
+			fps = std::stod( next() );
+		else if( arg == "--size" )
+		{
+			// WxH, the form the video pipeline passes.
+			const std::string s = next();
+			const size_t      x = s.find( 'x' );
+			if( x != std::string::npos )
+			{
+				options.width  = std::stoi( s.substr( 0, x ) );
+				options.height = std::stoi( s.substr( x + 1 ) );
+			}
+		}
 		else if( arg == "--out" || arg == "--scene" || arg == "--sheet" )
 		{
 			mode = arg;
@@ -1430,6 +1670,8 @@ int main( int argc, char** argv )
 		return writeScene( path, options );
 	if( mode == "--sheet" )
 		return writeSheet( path, options );
+	if( mode == "--pipe" )
+		return runPipe( options.width, options.height, fps, script, options );
 	if( mode == "--bench" )
 		return bench( options );
 

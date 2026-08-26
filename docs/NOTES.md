@@ -166,6 +166,38 @@ possible — the passes are cheap — and was not done because nothing has asked
 
 ---
 
+## The causal trail, measured through `--pipe`
+
+Confirmed 2026-08-26 on a white box on a dark grey field, one row through the
+box, time constant about 8 us:
+
+| region | output |
+|---|---|
+| far left, undisturbed | 46.00 |
+| just left of the box | 45.93 |
+| the box | 83.00 |
+| just right of the box | **12.07** |
+| further right | 17.89 |
+| far right, recovered | 43.30 |
+
+The left-hand side is untouched to within a hundredth of a level and the
+right-hand side is cut to a quarter and recovers exponentially. That is the
+whole claim of the effect, measured rather than looked at, and it also proves
+the row flipping through `--pipe` is right — ffmpeg hands over rows top-down and
+GL wants them bottom-up, and getting it wrong would put the trail above bright
+objects instead of after them.
+
+Two things that made the first two attempts measure nothing, both worth knowing:
+
+- ⚠️ **The gain is multiplicative, so it does nothing to true black.** A white
+  box on a black field shows no trail at all, because zero times any gain is
+  still zero. The field has to be dark but not black.
+- ⚠️ **A long time constant wraps and saturates the frame.** At about 300 us —
+  roughly six lines at 640 wide — the box's envelope reaches all the way round
+  the scan and back, so both sides of it read the same and the asymmetry is
+  invisible. That is correct behaviour and not a bug, but it means a test for
+  the trail has to use a constant short enough to stay inside one line.
+
 ## Traps
 
 ### `SetParamInfof` reads its default out of the plugin
