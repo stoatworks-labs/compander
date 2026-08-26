@@ -240,6 +240,14 @@ private:
 	float audioEnvelope = 1.0f;
 	float audioBalance  = 0.0f;
 
+	/// Logged once, the first time a spectrum actually arrives.
+	///
+	/// "The audio controls do nothing" is a real support case and almost always
+	/// the same cause: the host's audio-source picker on the Audio parameter is
+	/// set to something silent. From the plugin's side that is indistinguishable
+	/// from a working setup with a quiet track, so the log says which it is.
+	bool audioSeen = false;
+
 	//-- Host state -------------------------------------------------------
 
 	float params[ PT_COUNT ] = {};

@@ -740,6 +740,14 @@ void Plugin::UpdateAudio()
 
 	const float total = low + high;
 	audioBalance      = total > 1.0e-4f ? ( high - low ) / total : 0.0f;
+
+	// Once, when a spectrum first turns up. See `audioSeen`.
+	if( !audioSeen && total > 0.01f )
+	{
+		audioSeen = true;
+		diag::info( "audio input active: " + std::to_string( bins ) + " bins, envelope " +
+		            std::to_string( audioEnvelope ) + ", balance " + std::to_string( audioBalance ) );
+	}
 }
 
 //===========================================================================

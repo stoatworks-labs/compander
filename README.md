@@ -7,10 +7,12 @@
 > parallel envelope detector against a strictly serial implementation of the same
 > law, and proves the effect acts along the scan and not across it (see
 > [Status](#status)). The plugin **loads in Resolume Arena 7.27.1** and is listed
-> by the host, but **has never been instantiated on a layer**, and the
-> audio-reactive controls have never been exercised at all. The OpenFX build has
-> only ever been driven by a test probe, never opened in Resolve. Check it in
-> your own rig before trusting it in a show.
+> The FFGL build has been **loaded into Resolume Arena 7.27.1, put on a layer and
+> run on real footage**, with its controls, groups and factory presets read back
+> out of the running host. **No audio spectrum has ever reached it**, though — the
+> audio-reactive controls are wired and recognised by Resolume but have never been
+> driven. The OpenFX build has only ever been exercised by a test probe, never
+> opened in Resolve. Check it in your own rig before trusting it in a show.
 
 An analogue radio mic's companding circuit, with your footage pushed through it
 instead of a microphone signal — an FFGL plugin for [Resolume](https://resolume.com)
@@ -111,12 +113,22 @@ Verified by measurement, in `tools/verify.sh`:
 - no control is dead, and no two presets render the same picture;
 - 0.73–1.09 ms a frame at 1920×1080 on an M4 Max.
 
-**Not verified.** The plugin is listed by Arena 7.27.1 but **has never been
-instantiated on a layer**, so nothing about how it looks on real footage or how
-Resolume lays out its controls has been seen. **The audio-reactive controls have
-never been exercised** — the offline harness delivers no spectrum. The OpenFX
-build loads and renders under a test probe but has never been opened in a real
-host. It has never been built on Windows.
+Confirmed in Resolume Arena 7.27.1, on a layer, rendering real footage:
+
+- all 24 controls present with the right names, none truncated by the host's
+  16-character limit;
+- all eight parameter groups drawn in order, no duplicates;
+- **factory presets apply, survive the host pushing parameters at them for eight
+  seconds of live rendering, and fall back to Custom on a real edit**;
+- Resolume draws the audio-source picker on the Audio input, so the FFT buffer is
+  declared correctly.
+
+**Not verified.** **No audio spectrum has ever reached the plugin** — the test
+machine's Arena had its composition audio muted, so there was nothing to analyse.
+The audio controls are wired and recognised but undriven; if they do nothing for
+you, check the log for `audio input active`. The OpenFX build loads and renders
+under a test probe but has never been opened in Resolve. It has never been built
+on Windows.
 
 The two builds deliberately differ in one place: a CPU can run the detector's
 serial recursion directly, so the OpenFX build computes the envelope law exactly,

@@ -307,22 +307,48 @@ correctly only when the host happened to ask for a whole frame.
   921600, and ad-hoc signs with `CFBundleExecutable` matching the binary on
   disk.
 - **Arena 7.27.1 lists the plugin**: idstring `CM01`, name `Compander`,
-  category `Video Effects`, description read correctly. Confirmed over the REST
-  API, read-only.
+  category `Video Effects`, description read correctly.
+- **Instantiated on a layer in Arena 7.27.1 and rendered live on real footage**
+  (a DXV AV clip), 2026-08-26. Everything below was read back out of the running
+  host over its REST API or seen in its inspector, not inferred.
+- **All 24 parameters present with the right names, none truncated.** Two are
+  exactly 16 characters (`Source on GitHub`, `Support the work`) and both display
+  complete — they are the fleet's standard About buttons.
+- **All eight parameter groups** — Signal, Encode, Link, Decode, Detector, Audio,
+  Output, Preset — render as their own collapsible headers, in order, with no
+  duplicates.
+- **The declared defaults arrive correctly**, which is the in-host confirmation of
+  the `SetParamInfof` fix below.
+- ☠️ **Factory presets work in a real Resolume.** Applying one sets the controls;
+  it then **held for eight seconds of live rendering** while the host pushed
+  parameters at it, and **dropped to Custom on a genuine edit**. The fleet note on
+  this pattern says it had never been seen live in Resolume or Resolve — it has
+  now, and it behaves.
+- **The About line renders with the version**: `Compander v0.1.0 - MIT -
+  Stoatworks Labs, stoatworks-labs.com`.
+- **Resolume recognises the FFT buffer.** The `Audio` parameter is drawn as
+  Resolume's own audio-source picker (Local / Composition / External), which only
+  happens for a correctly declared `FF_USAGE_FFT` buffer param.
 - 0.73–1.09 ms a frame at 1920×1080 on an M4 Max, scaling with the pass count.
 
 **Not verified:**
 
-- ☠️ **Never instantiated on a layer in Arena.** It is listed, not used. Nobody
-  has dragged it onto footage, moved a slider, or looked at the result in a real
-  host. Confirming the parameter names as Resolume actually displays them needs
-  the Arena release gate (`plugin-bench/arena`), and `Source on GitHub` is
-  exactly 16 characters — which the gate cannot tell from a truncation without a
-  `declared` entry.
-- **Audio reactivity is entirely untested.** The offline harness delivers no
-  spectrum, so `Sidechain`, `Audio Amount`, `Audio Band` and `Audio Tilt` are
-  skipped by `sweep.py` and have never been exercised. The FFT wiring follows the
-  fleet's established pattern but has not been seen to work.
+- ☠️ **No audio spectrum has ever reached the shader.** Resolume draws the
+  audio-source picker, so the buffer parameter is declared correctly — but the
+  test machine's Arena had composition audio at **0.0**, so there was no signal
+  to analyse and no envelope was ever delivered. `Sidechain`, `Audio Amount`,
+  `Audio Band` and `Audio Tilt` remain unexercised end to end, in Arena and in
+  the harness alike.
+
+  The volume was left alone deliberately rather than turned up. To close this:
+  unmute the composition, put an AV clip on a layer, set Sidechain to Audio, and
+  check the log for `audio input active: 64 bins, envelope …` — a line that
+  exists precisely so this question has a one-line answer.
+- **Whether Arena's UI sliders visually follow a preset is not established.** The
+  REST readback matches the preset exactly, but REST reads `GetFloatParameter`,
+  which reflects the plugin's own state rather than what the inspector draws. The
+  two are only distinguishable by eye, and the attempt to expand a group in the
+  UI mis-clicked twice and was abandoned. `plugin-bench/arena` is the right tool.
 - **The macOS build here is arm64 only.** What ships must be built without
   `-DCMAKE_OSX_ARCHITECTURES`, and checked with `lipo` rather than the build log.
 - **The OpenFX build has only ever been driven by `ofxprobe`.** It loads,

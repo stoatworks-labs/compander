@@ -160,11 +160,16 @@ byte-identical. Detail along the scan moves 6.7× while detail across it moves
 1.5×. All ten presets survive all three host behaviours. No dead controls. All
 nine shaders compile. Arena 7.27.1 lists the plugin. 0.73–1.09 ms at 1080p.
 
-**Not verified.** ☠️ It has **never been instantiated on a layer in Arena** — it
-is listed, not used. **Audio reactivity is entirely untested**: the harness
-delivers no spectrum, so all four audio controls are skipped by `sweep.py` and
-have never been exercised. The OpenFX build has only ever been driven by
-`ofxprobe`, never opened in Resolve. Never built on Windows. The local build is
-arm64 only.
+**Verified in the host, 2026-08-26.** Instantiated on a layer in Arena 7.27.1 and
+rendered on real footage. All 24 parameter names correct, all eight groups drawn
+in order, declared defaults correct, About line correct — and **factory presets
+hold under the host's parameter pushes and fall back to Custom on a real edit**,
+which the fleet note on that pattern says had never been seen live.
+
+**Not verified.** ☠️ **No audio spectrum has ever reached the shader** — the test
+machine's Arena had composition audio at 0.0. The buffer parameter is declared
+correctly (Resolume draws its audio-source picker) but nothing has driven it. The
+OpenFX build has only ever been driven by `ofxprobe`, never opened in Resolve.
+Never built on Windows.
 
 Do not describe any of that as working.
