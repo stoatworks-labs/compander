@@ -32,6 +32,8 @@ in → EMPHASIS → COMPRESS → [ link: level, ceiling, noise ] → EXPAND → 
 Get every stage right and almost nothing happens — a working radio mic sounds
 like a cable. Everything this plugin is for comes from the two ends disagreeing.
 
+**Video:** [What it does, in 50 seconds](https://www.youtube.com/watch?v=AMorya_4GKE)
+
 <!-- downloads:start -->
 
 ## Download
