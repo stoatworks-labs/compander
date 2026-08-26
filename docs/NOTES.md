@@ -357,6 +357,9 @@ correctly only when the host happened to ask for a whole frame.
   parameter pages.
 - **Windows has never been built.** `vcpkg.json` is present and correct by
   inspection only.
-- `compander` is **not in the website's `projects.json`**, so
-  `source/StoatworksAbout.h` was seeded by hand and the guide and project-page
-  URLs in the About block are 404s until it is added and the sync re-run.
+- The website page and the published guide do not exist until the site is
+  deployed. `projects.json`, `shots.json` and `sync-about.py`'s own slug table
+  all carry `compander` as of 2026-08-26, and `source/StoatworksAbout.h` is
+  generated rather than hand-seeded — so the four About buttons carry real URLs,
+  but the guide and project pages behind two of them are live only once the site
+  is built and deployed.
