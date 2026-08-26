@@ -32,6 +32,49 @@ in → EMPHASIS → COMPRESS → [ link: level, ceiling, noise ] → EXPAND → 
 Get every stage right and almost nothing happens — a working radio mic sounds
 like a cable. Everything this plugin is for comes from the two ends disagreeing.
 
+<!-- downloads:start -->
+
+## Download
+
+**[v0.1.0](https://github.com/stoatworks-labs/compander/releases/tag/v0.1.0)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+
+<details>
+<summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`compander-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/compander/releases/download/v0.1.0/compander-0.1.0-macos-universal.dmg) | 222 KB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`compander-macos-universal.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-macos-universal.zip) | 185 KB |
+| Universal (Apple Silicon + Intel) · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`compander-ofx-macos-universal.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-ofx-macos-universal.zip) | 253 KB |
+
+</details>
+
+<details>
+<summary><b>Windows</b> — x64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .exe installer | [`compander-0.1.0-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/compander/releases/download/v0.1.0/compander-0.1.0-windows-x86_64-setup.exe) | 223 KB |
+| x64 · .zip archive | [`compander-windows-x86_64.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-windows-x86_64.zip) | 117 KB |
+| x64 · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`compander-ofx-windows-x86_64.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-ofx-windows-x86_64.zip) | 66 KB |
+
+</details>
+
+<details>
+<summary><b>Linux</b> — x64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`compander-ofx-linux-x86_64.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-ofx-linux-x86_64.zip) | 741 KB |
+
+</details>
+
+All builds, checksums and release notes: [github.com/stoatworks-labs/compander/releases](https://github.com/stoatworks-labs/compander/releases).
+
+macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once.
+
+<!-- downloads:end -->
+
 ## What it does
 
 - **Compress** and **Expand** are set independently, so you can run half the
