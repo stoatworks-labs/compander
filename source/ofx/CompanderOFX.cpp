@@ -41,7 +41,6 @@
 
 #include "ofxsImageEffect.h"
 #include "ofxsMultiThread.h"
-#include "ofxsProcessing.H"
 
 #include "StoatworksAboutOFX.h"
 

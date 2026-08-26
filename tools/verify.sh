@@ -74,6 +74,19 @@ else
 fi
 
 #---------------------------------------------------------------------------
+section "include case"
+#
+# macOS is case-insensitive and Linux is not, so an include whose case does not
+# match its file builds here and on Windows and dies only on the Linux OpenFX
+# job -- which runs after the tag. See tools/check-include-case.py.
+#---------------------------------------------------------------------------
+if python3 tools/check-include-case.py; then
+	pass "every #include matches its file's real case"
+else
+	fail "an #include disagrees with the filename's case -- builds on macOS, fails on Linux"
+fi
+
+#---------------------------------------------------------------------------
 section "build"
 #---------------------------------------------------------------------------
 if [ ! -x "$build/cmtest" ]; then

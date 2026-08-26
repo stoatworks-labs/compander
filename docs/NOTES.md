@@ -237,6 +237,25 @@ level 0 forever and the whole frame-scale range of `Time Constant` quietly stops
 working. It samples an 8×8 grid instead, which is cheap at 1×1 and depends on
 nothing.
 
+### An include's case, which only Linux can see
+
+☠️ **Cutting v0.1.0 failed on this**, after the tag.
+
+`source/ofx/CompanderOFX.cpp` included `"ofxsProcessing.H"`. The file is
+`ofxsProcessing.h`. macOS is case-insensitive and so is Windows, so two of the
+three release jobs went green and the Linux OpenFX one died with
+`fatal error: ofxsProcessing.H: No such file or directory`. No release was
+published.
+
+**The header was not even needed** — this plugin deliberately does not use
+`OFX::ImageProcessor`, and the include was carried over from the donor file
+along with everything else. So the fix was to delete it, not to correct it.
+
+Nothing local could have caught it: not a build, not a test, not a review that
+was not specifically looking for case. `tools/check-include-case.py` now compares
+every `#include` against the real filenames on disk and is wired into
+`verify.sh`, which closes the class rather than this instance.
+
 ### The tests had two bugs of their own
 
 Both made a test pass while measuring the wrong thing, which is worse than
