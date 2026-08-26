@@ -8,12 +8,14 @@
 > law, and proves the effect acts along the scan and not across it (see
 > [Status](#status)). The plugin **loads in Resolume Arena 7.27.1** and is listed
 > by the host, but **has never been instantiated on a layer**, and the
-> audio-reactive controls have never been exercised at all. Check it in your own
-> rig before trusting it in a show.
+> audio-reactive controls have never been exercised at all. The OpenFX build has
+> only ever been driven by a test probe, never opened in Resolve. Check it in
+> your own rig before trusting it in a show.
 
 An analogue radio mic's companding circuit, with your footage pushed through it
 instead of a microphone signal — an FFGL plugin for [Resolume](https://resolume.com)
-Arena and Avenue.
+Arena and Avenue, and the same thing again as an OpenFX plugin for Resolve, Nuke,
+Natron and Vegas.
 
 A wireless link cannot carry the dynamic range of what is sent down it. So the
 transmitter squashes it — pre-emphasis to lift the quiet top end above the noise,
@@ -112,8 +114,14 @@ Verified by measurement, in `tools/verify.sh`:
 **Not verified.** The plugin is listed by Arena 7.27.1 but **has never been
 instantiated on a layer**, so nothing about how it looks on real footage or how
 Resolume lays out its controls has been seen. **The audio-reactive controls have
-never been exercised** — the offline harness delivers no spectrum. There is no
-OpenFX build yet, and it has never been built on Windows.
+never been exercised** — the offline harness delivers no spectrum. The OpenFX
+build loads and renders under a test probe but has never been opened in a real
+host. It has never been built on Windows.
+
+The two builds deliberately differ in one place: a CPU can run the detector's
+serial recursion directly, so the OpenFX build computes the envelope law exactly,
+while the FFGL build reaches the same answer by recursive doubling on the GPU.
+The OpenFX build has no audio sidechain, because OpenFX has no audio input.
 
 ## Licence
 

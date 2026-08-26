@@ -76,6 +76,7 @@ and each has already caught a real bug.
 | `Presets.h` | the preset table, host-agnostic, in 0..1 space. |
 | `Shaders.h`, `shaders/` | the GLSL. `Common.cpp` is the mirror of `Chain.cpp`. |
 | `Plugin.h/.cpp` | the FFGL glue: parameters, buffers, pass order. |
+| `ofx/CompanderOFX.cpp` | the OpenFX build. Links the model and writes only the render loop again. |
 | `tools/cmtest` | the harness. Drives the real plugin class. |
 
 `compander_model` is a separate CMake target with **no GL and no FFGL in it at
@@ -91,6 +92,23 @@ block is marked `//= mirrored` in both. Change one, change both.
 The **gain laws are not mirrored.** They are sampled into two 128-point uniform
 arrays by `fillGainTables`. A curve that existed twice is a curve a preset could
 disagree with itself about.
+
+---
+
+## The two builds differ on purpose
+
+A CPU can run a serial recursion and a GPU cannot, so the FFGL build computes the
+peak detector by recursive doubling (exact within `2^K` samples, quarter width,
+capped, with a frame-global follower above the cap) and the OpenFX build just
+calls `serialEnvelope` — the law itself, unbounded, full resolution.
+
+**The OpenFX build is the more correct one, and it is missing two things.** It
+has no frame-to-frame release, because OFX renders frames in any order and holds
+no state; and it has no audio sidechain, because OpenFX has no audio input. Both
+are stated in that file's header rather than papered over.
+
+`setSupportsTiles(false)` there is load-bearing, not a performance choice: a tile
+is the middle of a recursion without its beginning.
 
 ---
 
@@ -145,7 +163,8 @@ nine shaders compile. Arena 7.27.1 lists the plugin. 0.73–1.09 ms at 1080p.
 **Not verified.** ☠️ It has **never been instantiated on a layer in Arena** — it
 is listed, not used. **Audio reactivity is entirely untested**: the harness
 delivers no spectrum, so all four audio controls are skipped by `sweep.py` and
-have never been exercised. No OpenFX build. Never built on Windows. The local
-build is arm64 only.
+have never been exercised. The OpenFX build has only ever been driven by
+`ofxprobe`, never opened in Resolve. Never built on Windows. The local build is
+arm64 only.
 
 Do not describe any of that as working.

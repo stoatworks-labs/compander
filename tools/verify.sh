@@ -230,6 +230,28 @@ else
 		fi
 		rm -rf "$(dirname "$scratch")"
 	fi
+
+	# And it must actually render. ofxprobe loads the bundle the way a host
+	# does and reports how much of the frame changed; 0 bytes differing here
+	# means the same class of failure it means for the FFGL bundle.
+	ofxprobe="$root/../resolume-ofx-bridge/build/ofxprobe"
+	if [ ! -x "$ofxprobe" ]; then
+		skip "ofxprobe not built (../resolume-ofx-bridge) -- the OpenFX render is unchecked"
+	else
+		out="$(mktemp -d)/ofx.bmp"
+		result="$("$ofxprobe" --dir "$build" --render com.stoatworks.compander \
+		          --size 640x360 --out "$out" 2>&1)"
+		if ! grep -q "rendered" <<<"$result"; then
+			fail "the OpenFX bundle does not render"
+			sed 's/^/       /' <<<"$result"
+		elif grep -qE "^ *0 of [0-9]+ bytes differ" <<<"$result"; then
+			fail "the OpenFX bundle renders its input unchanged"
+			sed 's/^/       /' <<<"$result"
+		else
+			pass "the OpenFX bundle renders ($(grep -oE '[0-9]+ of [0-9]+ bytes differ' <<<"$result"))"
+		fi
+		rm -rf "$(dirname "$out")"
+	fi
 fi
 
 #---------------------------------------------------------------------------

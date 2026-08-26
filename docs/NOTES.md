@@ -255,6 +255,35 @@ failing.
 
 ---
 
+## The two builds do not match, and the OpenFX one is more correct
+
+A CPU can run a serial recursion and a GPU cannot. So:
+
+- **FFGL** computes the peak detector by **recursive doubling** — exact within a
+  window of `2^K` samples, at quarter width, with a pass cap that stops the
+  window reaching a whole frame, and a frame-global follower crossfaded in above
+  it.
+- **OpenFX** simply calls `serialEnvelope`: the law itself, unbounded history,
+  full resolution. There is no seam and no cap.
+
+⚠️ **What the OpenFX build cannot do is the frame-to-frame release.** OFX renders
+frames in any order and holds no state between them, so there is no previous
+frame's envelope to decay from and the whole-picture pumping across a cut is
+absent. Exact and deterministic there, merely faithful on the FFGL side — the
+same trade afterglow's OpenFX build makes with its frame queue.
+
+**There is also no audio sidechain in the OpenFX build.** OFX has no FFT input
+and no beat info. Rather than expose four controls that do nothing, they are left
+out of that build's control surface entirely.
+
+`desc.setSupportsTiles( false )` is **not a performance choice**. The detector is
+a serial scan in which every sample depends on the one before it, so a tile is
+the middle of a recursion without its beginning. `getRegionsOfInterest` asks for
+the full source for the same reason. With tiles enabled the plugin would render
+correctly only when the host happened to ask for a whole frame.
+
+---
+
 ## Status — verified vs assumed
 
 **Verified by measurement:**
@@ -273,7 +302,10 @@ failing.
   ignores value events, which is Resolume (`--presets`).
 - No dead controls; all ten presets render distinctly (`sweep.py`).
 - All nine shaders compile under a real GLSL compiler (`verify.sh`).
-- The bundle instantiates through `ffgltest` and changes 5557 of 8192 bytes.
+- The FFGL bundle instantiates through `ffgltest` and changes 5557 of 8192
+  bytes; the OpenFX bundle renders through `ofxprobe` and changes 678562 of
+  921600, and ad-hoc signs with `CFBundleExecutable` matching the binary on
+  disk.
 - **Arena 7.27.1 lists the plugin**: idstring `CM01`, name `Compander`,
   category `Video Effects`, description read correctly. Confirmed over the REST
   API, read-only.
@@ -293,8 +325,10 @@ failing.
   fleet's established pattern but has not been seen to work.
 - **The macOS build here is arm64 only.** What ships must be built without
   `-DCMAKE_OSX_ARCHITECTURES`, and checked with `lipo` rather than the build log.
-- **No OpenFX build yet.** The model library is deliberately GL-free and
-  host-free so one can be added, and `verify.sh` already has the checks for it.
+- **The OpenFX build has only ever been driven by `ofxprobe`.** It loads,
+  renders 678562 of 921600 bytes changed, and ad-hoc signs — but it has never
+  been opened in Resolve, Nuke, Natron or Vegas, and no host has ever drawn its
+  parameter pages.
 - **Windows has never been built.** `vcpkg.json` is present and correct by
   inspection only.
 - `compander` is **not in the website's `projects.json`**, so
