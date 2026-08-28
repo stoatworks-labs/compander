@@ -170,6 +170,6 @@ which the fleet note on that pattern says had never been seen live.
 machine's Arena had composition audio at 0.0. The buffer parameter is declared
 correctly (Resolume draws its audio-source picker) but nothing has driven it. The
 OpenFX build has only ever been driven by `ofxprobe`, never opened in Resolve.
-Never built on Windows.
+Windows builds in CI and ships in the v0.1.0 release, but has never been run.
 
 Do not describe any of that as working.

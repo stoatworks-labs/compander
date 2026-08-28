@@ -423,8 +423,10 @@ correctly only when the host happened to ask for a whole frame.
   renders 678562 of 921600 bytes changed, and ad-hoc signs — but it has never
   been opened in Resolve, Nuke, Natron or Vegas, and no host has ever drawn its
   parameter pages.
-- **Windows has never been built.** `vcpkg.json` is present and correct by
-  inspection only.
+- **Windows builds, but has never been run.** `.github/workflows/release.yml`
+  builds it on `windows-latest`, and the v0.1.0 release carries
+  `compander-0.1.0-windows-x86_64-setup.exe`, `compander-windows-x86_64.zip` and
+  `compander-ofx-windows-x86_64.zip`. No Windows machine has loaded any of them.
 - The website page and the published guide do not exist until the site is
   deployed. `projects.json`, `shots.json` and `sync-about.py`'s own slug table
   all carry `compander` as of 2026-08-26, and `source/StoatworksAbout.h` is

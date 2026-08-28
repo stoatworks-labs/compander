@@ -172,8 +172,9 @@ Confirmed in Resolume Arena 7.27.1, on a layer, rendering real footage:
 machine's Arena had its composition audio muted, so there was nothing to analyse.
 The audio controls are wired and recognised but undriven; if they do nothing for
 you, check the log for `audio input active`. The OpenFX build loads and renders
-under a test probe but has never been opened in Resolve. It has never been built
-on Windows.
+under a test probe but has never been opened in Resolve. The Windows build is
+compiled by CI and the v0.1.0 release ships an x64 installer and both zips — but
+nothing has ever run it on Windows.
 
 The two builds deliberately differ in one place: a CPU can run the detector's
 serial recursion directly, so the OpenFX build computes the envelope law exactly,
