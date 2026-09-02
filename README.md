@@ -38,14 +38,14 @@ like a cable. Everything this plugin is for comes from the two ends disagreeing.
 
 ## Download
 
-**[v0.1.0](https://github.com/stoatworks-labs/compander/releases/tag/v0.1.0)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+**[v0.1.1](https://github.com/stoatworks-labs/compander/releases/tag/v0.1.1)** — prebuilt for macOS, Windows and Linux. Pick your platform:
 
 <details>
 <summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`compander-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/compander/releases/download/v0.1.0/compander-0.1.0-macos-universal.dmg) | 222 KB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`compander-0.1.1-macos-universal.dmg`](https://github.com/stoatworks-labs/compander/releases/download/v0.1.1/compander-0.1.1-macos-universal.dmg) | 223 KB |
 | Universal (Apple Silicon + Intel) · .zip archive | [`compander-macos-universal.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-macos-universal.zip) | 185 KB |
 | Universal (Apple Silicon + Intel) · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`compander-ofx-macos-universal.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-ofx-macos-universal.zip) | 253 KB |
 
@@ -56,7 +56,7 @@ like a cable. Everything this plugin is for comes from the two ends disagreeing.
 
 | Build | Download | Size |
 | --- | --- | --- |
-| x64 · .exe installer | [`compander-0.1.0-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/compander/releases/download/v0.1.0/compander-0.1.0-windows-x86_64-setup.exe) | 223 KB |
+| x64 · .exe installer | [`compander-0.1.1-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/compander/releases/download/v0.1.1/compander-0.1.1-windows-x86_64-setup.exe) | 223 KB |
 | x64 · .zip archive | [`compander-windows-x86_64.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-windows-x86_64.zip) | 117 KB |
 | x64 · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`compander-ofx-windows-x86_64.zip`](https://github.com/stoatworks-labs/compander/releases/latest/download/compander-ofx-windows-x86_64.zip) | 66 KB |
 
