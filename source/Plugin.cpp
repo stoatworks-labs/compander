@@ -24,7 +24,7 @@ static CFFGLPluginInfo PluginInfo(
 	0,                      // Plugin major version number
 	1,                      // Plugin minor version number
 	FF_EFFECT,              // Plugin type
-	stoatworks::about::hook,// Plugin description
+	"An analogue radio mic's companding circuit, with your footage pushed through it instead of a microphone signal.\n\nA compander is a round trip, and everything anybody recognises about it is the two ends failing to cancel. The transmitter lifts the quiet top end above the noise and halves the signal's excursion; the receiver does the exact opposite. In between sits a link with a noise floor, a ceiling, and no opinion about either.\n\nGet every stage right and almost nothing happens - a working radio mic sounds like a cable. Everything you want from this comes from making the ends disagree.\n\nStart from a Preset, at the bottom.",// Plugin description
 	stoatworks::about::org  // About
 );
 
