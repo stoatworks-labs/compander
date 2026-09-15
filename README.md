@@ -34,6 +34,10 @@ like a cable. Everything this plugin is for comes from the two ends disagreeing.
 
 **Video:** [What it does, in 50 seconds](https://www.youtube.com/watch?v=AMorya_4GKE)
 
+![Compander's synthetic test scene through the shipped shaders: a flat band, hard edges, two combs and a ramp](docs/hero.png)
+
+<sub>Rendered by the plugin's own offline harness in a headless GL context — not a Resolume screen capture. Real frames through the real shipped shaders, on a synthetic scene built to make companding measurable: a flat band, hard vertical edges, two one-pixel combs at ninety degrees to each other, and a ramp.</sub>
+
 <!-- downloads:start -->
 
 ## Download
