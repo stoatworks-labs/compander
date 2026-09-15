@@ -4,6 +4,10 @@ Compander is **an analogue radio mic's companding circuit, with your picture pus
 — an FFGL plugin for [Resolume](https://resolume.com) Arena and Avenue, and an OpenFX plugin for
 DaVinci Resolve, Vegas, Nuke and Natron.
 
+![Rendered by the plugin's own offline harness in a headless GL context — not a Resolume screen capture.](hero.png)
+
+*Rendered by the plugin's own offline harness in a headless GL context — not a Resolume screen capture. Real frames through the real shipped shaders, on a synthetic scene built to make companding measurable: a flat band, hard vertical edges, two one-pixel combs at ninety degrees to each other, and a ramp.*
+
 A wireless microphone link cannot carry the dynamic range of what is sent down it. So the
 transmitter squashes it — pre-emphasis to lift the quiet top end above the link's noise, then a
 compressor that halves the signal's excursion in dB — and the receiver does the exact opposite.
