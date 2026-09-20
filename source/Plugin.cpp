@@ -18,7 +18,7 @@ using namespace compander;
 static CFFGLPluginInfo PluginInfo(
 	PluginFactory< Plugin >,// Create method
 	"CM01",                 // Plugin unique ID of maximum length 4
-	"Compander",            // Plugin name
+	"SW Compander",         // Plugin name
 	2,                      // API major version number
 	1,                      // API minor version number
 	0,                      // Plugin major version number
