@@ -23,6 +23,22 @@ build="${1:-build}"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
+# resolume-ofx-bridge, for ffgltest and ofxprobe. It sits beside this repo's
+# checkout -- and from a git worktree `$root/..` is the worktrees folder, not
+# Projects/resolume, so the main checkout is found through git's common dir as
+# well. COMPANDER_BRIDGE overrides both.
+bridge="${COMPANDER_BRIDGE:-}"
+if [ -z "$bridge" ]; then
+	for candidate in "$root/../resolume-ofx-bridge" \
+	                 "$(dirname "$(git -C "$root" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")/../resolume-ofx-bridge"; do
+		if [ -d "$candidate/build" ]; then
+			bridge="$candidate"
+			break
+		fi
+	done
+fi
+bridge="${bridge:-$root/../resolume-ofx-bridge}"
+
 failures=0
 skipped=0
 
@@ -155,7 +171,7 @@ section "the bundle"
 # every control is zero -- including Mix.
 #---------------------------------------------------------------------------
 bundle="$build/Compander.bundle"
-ffgltest="$root/../resolume-ofx-bridge/build/ffgltest"
+ffgltest="$bridge/build/ffgltest"
 
 if [ ! -d "$bundle" ]; then
 	fail "no bundle at $bundle"
@@ -247,7 +263,7 @@ else
 	# And it must actually render. ofxprobe loads the bundle the way a host
 	# does and reports how much of the frame changed; 0 bytes differing here
 	# means the same class of failure it means for the FFGL bundle.
-	ofxprobe="$root/../resolume-ofx-bridge/build/ofxprobe"
+	ofxprobe="$bridge/build/ofxprobe"
 	if [ ! -x "$ofxprobe" ]; then
 		skip "ofxprobe not built (../resolume-ofx-bridge) -- the OpenFX render is unchecked"
 	else
