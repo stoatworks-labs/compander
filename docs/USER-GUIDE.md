@@ -41,8 +41,9 @@ line after line.
 > a test probe and has **never been opened in Resolve**. Try it on a spare layer before you put it
 > in a show.
 >
-> Released at v0.1.0. This codebase was created with AI assistance, directed and reviewed by a
-> human author.
+> Released at v0.1.4, whose OpenFX build now tells the host that its output changes from frame to
+> frame (the noise floor moves), so a host that caches by that flag re-renders it. This codebase
+> was created with AI assistance, directed and reviewed by a human author.
 
 ---
 
