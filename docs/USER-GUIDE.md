@@ -29,8 +29,9 @@ line after line.
 > cancels to **three millionths of a decibel** wherever its gain law is unbounded, a flat field
 > comes back **byte-identical** through a matched pair, and the envelope detector the GPU runs is
 > checked against a strictly serial implementation of the same law (one that could never run on a
-> GPU), which it agrees with to float precision. All 24 controls are confirmed to change the
-> picture and no two presets render the same frame.
+> GPU), which it agrees with to float precision. All 13 controls the offline sweep can drive are
+> confirmed to change the picture (Sidechain's audio modes and the Audio group need a spectrum it
+> can't supply), and no two presets render the same frame.
 >
 > It's been **loaded into Resolume Arena 7.27.1, put on a layer and run on real footage**, with
 > its controls, groups and factory presets read back out of the running host.
@@ -249,7 +250,7 @@ output is routed to a virtual sink with no input device configured has no live a
 analyse, and nothing will ever reach an audio-reactive parameter, this plugin's or anyone else's.
 
     macOS    ~/Library/Logs/compander/compander.YYYY-MM-DD.log
-    Windows  %USERPROFILE%\compander\logs\
+    Windows  %LOCALAPPDATA%\compander\logs\
 
 ---
 
