@@ -90,6 +90,80 @@ else
 fi
 
 #---------------------------------------------------------------------------
+section "the browser demo's shaders"
+#
+# demo/shaders.js carries copies of source/shaders/*.cpp, and plugin.js the
+# preset rows of Presets.h. A copy that drifts still paints a plausible
+# picture, so the drift has to fail here instead: rerun
+# `python3 demo/tools/check_shaders.py --write` after changing a shader.
+#---------------------------------------------------------------------------
+if [ -f demo/tools/check_shaders.py ]; then
+	log="$(mktemp)"
+	if python3 demo/tools/check_shaders.py >"$log" 2>&1; then
+		pass "$(tail -1 "$log")"
+	else
+		tail -14 "$log" | sed 's/^/       /'
+		fail "the demo's shaders or presets have drifted from source/"
+	fi
+	rm -f "$log"
+elif [ -d demo ]; then
+	fail "demo/ exists but demo/tools/check_shaders.py does not"
+else
+	skip "no demo/"
+fi
+
+#---------------------------------------------------------------------------
+section "the browser demo's port of the CPU half"
+#
+# demo/plugin.js converts the controls, builds the gain tables and plans the
+# detector in JavaScript. A port that drifts still draws a plausible
+# compander, so demo/tools/crosscheck/crosscheck.sh runs the plugin's own
+# Controls/Compander/Detector/Chain.cpp and the port through one scenario and
+# compares them, with two broken ports that must fail.
+#---------------------------------------------------------------------------
+if [ -x demo/tools/crosscheck/crosscheck.sh ]; then
+	log="$(mktemp)"
+	demo/tools/crosscheck/crosscheck.sh >"$log" 2>&1
+	status=$?
+	if [ "$status" -eq 0 ]; then
+		pass "$(tail -1 "$log")"
+	elif [ "$status" -eq 2 ]; then
+		skip "$(tail -1 "$log")"
+	else
+		sed 's/^/       /' "$log" | cut -c1-200
+		fail "the demo's port of the CPU half has drifted from the plugin's C++"
+	fi
+	rm -f "$log"
+fi
+
+#---------------------------------------------------------------------------
+section "the browser demo against the plugin, picture for picture"
+#
+# demo/tools/crosscheck/pixels.mjs runs the page's renderer in headless Chrome
+# and the real plugin class through `cmtest --pipe` on the same input frames
+# and the same clock, and compares the outputs -- the only check of the page's
+# GL side and of the envelope state it carries from frame to frame. Its own
+# negative controls must fail. Needs Chrome and the harness built above.
+#---------------------------------------------------------------------------
+chrome="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
+if [ ! -f demo/tools/crosscheck/pixels.mjs ]; then
+	:
+elif ! command -v node >/dev/null 2>&1 || [ ! -x "$chrome" ]; then
+	skip "node or Chrome missing -- the demo's pictures are unchecked against the plugin"
+elif [ ! -x "$build/cmtest" ]; then
+	skip "no $build/cmtest -- the demo's pictures are unchecked against the plugin"
+else
+	log="$(mktemp)"
+	if node demo/tools/crosscheck/pixels.mjs --cmtest "$build/cmtest" >"$log" 2>&1; then
+		pass "$(tail -1 "$log")"
+	else
+		grep -E -A1 '^(FAIL|Error)' "$log" | sed 's/^/       /'
+		fail "the demo's pictures differ from the plugin's"
+	fi
+	rm -f "$log"
+fi
+
+#---------------------------------------------------------------------------
 section "include case"
 #
 # macOS is case-insensitive and Linux is not, so an include whose case does not
