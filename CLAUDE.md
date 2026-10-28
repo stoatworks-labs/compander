@@ -65,6 +65,20 @@ Read `AGENTS.md` before changing the chain, the detector or the control mapping.
 - macOS build must be universal. Verify with `lipo`, never the build log.
 - Public repo. "Commit" = commit **and** push.
 
+## Browser demo
+<https://compander-demo.stoatworks-labs.com/> -- `demo/`, the fleet's resolume-demo kit
+(`demo/vendor/`, never edited). AGENTS.md § *The browser demo* has what it does not
+reproduce and why.
+- Serve locally: `cd demo && python3 -m http.server 8000`
+- After changing a shader: `python3 demo/tools/check_shaders.py --write` (never edit `demo/shaders.js`)
+- After changing Controls/Compander/Detector/Chain.cpp or ProcessOpenGL: change the PORT block
+  of `demo/plugin.js` too, then `demo/tools/crosscheck/crosscheck.sh`
+- The page against the real plugin class: `node demo/tools/crosscheck/pixels.mjs [--out DIR]`
+  (needs Chrome and `build/cmtest`); `tools/verify.sh` runs all three
+- Deploy: `deploy.yml` on a push to main; by hand `cf-run npx wrangler deploy`. A ROUTE plus a
+  proxied AAAA `compander-demo` record, not a custom domain -- see `wrangler.toml`
+- Check what is live by content: `curl -s 'https://compander-demo.stoatworks-labs.com/?cb=1' | grep -o '<title>[^<]*'`
+
 ## Diagnostics
 
 `source/Diag.{h,cpp}` — log file only, no crash handler (this runs inside

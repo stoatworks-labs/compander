@@ -33,6 +33,8 @@ like a cable. Everything this plugin is for comes from the two ends disagreeing.
 
 **Video:** [What it does, in 50 seconds](https://www.youtube.com/watch?v=AMorya_4GKE)
 
+**Browser demo:** [compander-demo.stoatworks-labs.com](https://compander-demo.stoatworks-labs.com/), the plugin's own shaders in WebGL2, no install. It's a demo, not the plugin; see [below](#browser-demo).
+
 ![Compander's synthetic test scene through the shipped shaders: a flat band, hard edges, two combs and a ramp](docs/hero.png)
 
 <sub>Rendered by the plugin's own offline harness in a headless GL context rather than captured from Resolume. Actual frames through the shipped shaders, on a synthetic scene built to make companding measurable: a flat band, hard vertical edges, two one-pixel combs at ninety degrees to each other, and a ramp.</sub>
@@ -132,6 +134,21 @@ up-link, an ENG microwave truck, and the two half-chains on their own.
 
 They're named for what they are rather than for whose trademark they are. This
 isn't anybody's product and doesn't claim to be a measurement of one.
+
+## Browser demo
+
+**<https://compander-demo.stoatworks-labs.com/>** runs the plugin's own eight shader
+programs in WebGL2, pass for pass on the same half-float buffers, with every control it
+declares under its own name, group and default, and the ten presets. The shaders are
+spliced into `demo/shaders.js` unedited, and `demo/tools/check_shaders.py` fails
+`tools/verify.sh` on a changed character or a changed preset row. The CPU half (the control
+conversions, the gain tables, the detector's pass plan, the frame logic) is a JavaScript
+port, and `tools/verify.sh` holds it to the plugin twice: against the plugin's own C++, and
+picture for picture against the real plugin class through `cmtest --pipe`, where every
+channel of 330 frames comes out within one level of 255. A browser has no audio, so the
+Audio input, Audio Band and Audio Tilt aren't on the page and the sidechain runs on silence.
+It needs WebGL2 with `EXT_color_buffer_float`. It's a demo, not the plugin, and the page
+says what it doesn't reproduce.
 
 ## Build
 

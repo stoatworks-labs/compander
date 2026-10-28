@@ -189,3 +189,77 @@ OpenFX build has only ever been driven by `ofxprobe`, never opened in Resolve.
 Windows builds in CI and ships in the v0.1.0 release, but has never been run.
 
 Do not describe any of that as working.
+
+---
+
+## The browser demo (2026-10-28)
+
+`demo/` is <https://compander-demo.stoatworks-labs.com/>, built to the fleet's
+`resolume-demo` kit rules (`~/Projects/resolume/specs/DEMO-BRIEF.md`; the kit in
+`demo/vendor/` is copied from the backend and never edited). What a reader of it must know:
+
+- **The shaders are the plugin's.** All ten pieces of `source/shaders/` are spliced by
+  `demo/tools/check_shaders.py --write` into `demo/shaders.js` and compared character for
+  character. The same script checks the JOIN (kCommon at the first `@COMMON@` of the encode,
+  decode and output fragments, every pass against kVertex, as `assemble()` and InitGL do it,
+  and plugin.js's copy of both), fails on a shader piece it does not list, and holds
+  plugin.js's `PRESETS` to the rows of `Presets.h` as written. **All eight programs compile
+  and link in WebGL2 as spliced** (ANGLE on Metal, M4 Max; and SwiftShader). The blur
+  shader's local `float step` hides the built-in, and ES 3.00 accepts that.
+- **The passes, buffers and envelope state are the plugin's.** R16F throughout, linear and
+  clamped as `FFGLFBO` makes them, the detector at quarter width, and the frame-global
+  follower carried across frames in a ping-pong pair of 1×1 R16F buffers with the same slot
+  flip, the same First flag (first frame, and after a resize) and the decay computed on the
+  CPU from the frame's own duration. Nothing is read back. The noise's frame counter steps
+  once a render, as ProcessOpenGL's does.
+- **The CPU half is a port, held to the C++.** The PORT block of `demo/plugin.js` --
+  Controls.cpp, Compander.cpp (the laws and the two 128-point tables), Detector.cpp (the pass
+  plan, the follower's seconds), Chain.cpp's crossoverFor, and ProcessOpenGL's CPU half
+  written to RETURN each pass's uniforms. `demo/tools/crosscheck/crosscheck.sh` runs it under
+  node against `printer.cpp` on the plugin's own GL-free sources: 3,199 lines, 139,262 floats.
+  Against the C++ built `-ffp-contract=off` (the x86_64 slice's arithmetic), 138,869 are
+  identical to the bit and the rest within 2 ulp -- V8's Math against Apple's libm -- except
+  the per-pass decays, which are a^offset and so carry a 1-ulp difference in `a` raised to
+  a power of up to 8,192; `a` is printed and held to 2 ulp and each decay to the bound that
+  implies (the worst is at 40% of it). The native arm64 build fuses multiply-adds, which
+  JavaScript cannot, and differs by up to 23 ulp in the tables and 256 ulp where Link Level
+  crosses zero (5e-7 dB); that comparison is printed, never failed. Two broken ports (the
+  active line 52.5 µs, the knee 5 dB) must fail, and do.
+- **The pictures are held to the real plugin class.** `demo/tools/crosscheck/pixels.mjs`
+  drives the page's own renderer in headless Chrome (`harness.html`, which imports
+  `plugin.js`) and pipes the same input frames through `cmtest --pipe` on the same clock.
+  14 scenarios, 330 frames: the defaults on two clips, every Sidechain mode, five presets,
+  960 and 640 wide, Time Constant in the octave where the frame follower fades in, and past
+  it. **On an M4 Max (ANGLE on Metal) every channel of every frame is within 1/255 of the
+  plugin's, mean at most 0.0008/255**, and the tolerance is set there (max 1, mean 0.005).
+  Through SwiftShader it is within 2 levels, mean at most 0.09, and fails that tolerance;
+  look at `--out` pictures before loosening it for another GPU. Six negative controls (Time
+  Constant 0.56 against 0.55, the plugin told the wrong frame rate twice, Time Constant 0.98
+  against 1.0, Noise 0.14 against 0.13, the wrong preset) differ by 2 to 124 levels and
+  fail.
+- ⚠️ **No kit clip lets the frame's peak fall**, so on the clips alone the frame follower
+  only ever attacks and its release -- the one piece of state carried across frames that the
+  clock drives -- is never exercised: a test told the wrong frame rate still passed. The
+  harness's synthetic `step` input (a box switched from bright to dim) is what makes the
+  release, and those negative controls, bite. Keep a scenario like it.
+- **No audio.** A browser has no equivalent of the `FF_USAGE_FFT` buffer, so the Audio input,
+  Audio Band and Audio Tilt are absent from the panel rather than present and dead. The rest
+  is exactly the plugin with a silent spectrum: UpdateAudio over zeros gives an envelope of 0
+  for any Audio Band and a balance of 0. Sidechain keeps its three elements, and Audio and
+  Picture x Audio still act on silence (the shader fades the audio envelope towards unity by
+  Audio Amount, so the control signal sits at 1 − Audio Amount), so Audio Amount stays.
+- **Presets** are the plugin's Preset parameter, applied its way: the eleven covered values
+  written, Sidechain, Audio Amount and Mix left alone, a covered control moved by 1e-3 or more
+  dropping it to Custom. The panel moves its sliders to the preset, as a host that honours
+  value events would; Resolume does not, and the page says so.
+- **The clock** is the kit's, in seconds, handed to the port as cmtest --pipe hands the plugin
+  SetTime with the unit settled. The seconds-or-milliseconds vote and the wall clock before
+  it are not ported. The About block is not on the panel.
+- **When you change** a shader, rerun `check_shaders.py --write`; Controls, Compander,
+  Detector, Chain or ProcessOpenGL, change the PORT block and run both crosschecks;
+  `Presets.h`, change `PRESETS`. `tools/verify.sh` runs all three, skipping the pictures
+  without Chrome or a built cmtest.
+- **Not verified:** the page in anything but headless Chrome on an M4 Max (Metal and
+  SwiftShader), and on a phone, where `EXT_color_buffer_float` is often missing (the page then
+  stops and says so). The kit's "Use my own…" path was tried once, with `docs/scene.png`: it
+  ran at the still's 1280 × 720, the right way up.
