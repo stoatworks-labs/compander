@@ -18,6 +18,8 @@ instead of a microphone signal, as an FFGL plugin for [Resolume](https://resolum
 Arena and Avenue, and the same thing again as an OpenFX plugin for Resolve, Nuke,
 Natron and Vegas.
 
+The [project page](https://stoatworks-labs.com/software/compander/) has the downloads, the [user guide](https://stoatworks-labs.com/software/compander/guide/) and the video.
+
 A wireless link can't carry the dynamic range of what's sent down it. So the
 transmitter squashes it (pre-emphasis to lift the quiet top end above the noise,
 then a compressor that halves the signal's excursion in dB) and the receiver
